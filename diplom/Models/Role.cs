@@ -12,25 +12,18 @@ namespace diplom.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class Teacher
+    public partial class Role
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public Teacher()
+        public Role()
         {
-            this.Debts = new HashSet<Debt>();
-            this.Disciplines = new HashSet<Discipline>();
+            this.Users = new HashSet<User>();
         }
     
-        public int TeacherID { get; set; }
-        public string LastName { get; set; }
-        public string FirstName { get; set; }
-        public string MiddleName { get; set; }
-        public Nullable<int> UserID { get; set; }
+        public int RoleID { get; set; }
+        public string Name { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Debt> Debts { get; set; }
-        public virtual User User { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Discipline> Disciplines { get; set; }
+        public virtual ICollection<User> Users { get; set; }
     }
 }

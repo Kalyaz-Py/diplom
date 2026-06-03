@@ -30,9 +30,11 @@ namespace diplom.Models
         public virtual DbSet<Discipline> Disciplines { get; set; }
         public virtual DbSet<Group> Groups { get; set; }
         public virtual DbSet<ResitSchedule> ResitSchedules { get; set; }
+        public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
         public virtual DbSet<Student> Students { get; set; }
         public virtual DbSet<Teacher> Teachers { get; set; }
         public virtual DbSet<TimeSlot> TimeSlots { get; set; }
+        public virtual DbSet<User> Users { get; set; }
     }
 }

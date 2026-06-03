@@ -163,6 +163,55 @@ namespace diplom.Views
                     if (sheet.Dimension != null)
                         sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
 
+                    // Дополнительный лист: студенты в группе риска (более 3 активных долгов)
+                    try
+                    {
+                        var riskList = (from d in debtsRaw
+                                        join s in students on d.StudentID equals s.StudentID
+                                        join g in groups on s.GroupID equals g.GroupID
+                                        where !(d.IsCleared == true || d.DebtStatus == "Сдан")
+                                        group d by new { s.StudentID, s.StudentCardNumber, s.LastName, s.FirstName, s.MiddleName, g.GroupName } into grp
+                                        let cnt = grp.Count()
+                                        where cnt >= 3
+                                        select new
+                                        {
+                                            GroupName = grp.Key.GroupName,
+                                            StudentName = string.Join(" ", new[] { grp.Key.LastName, grp.Key.FirstName, grp.Key.MiddleName }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                                            StudentCardNumber = grp.Key.StudentCardNumber,
+                                            DebtCount = cnt
+                                        }).OrderByDescending(x => x.DebtCount).ThenBy(x => x.GroupName).ToList();
+
+                        if (riskList != null && riskList.Count > 0)
+                        {
+                            var riskSheet = package.Workbook.Worksheets.Add("Группа риска");
+                            riskSheet.Cells[1, 1].Value = "Группа";
+                            riskSheet.Cells[1, 2].Value = "ФИО студента";
+                            riskSheet.Cells[1, 3].Value = "№ зачетки";
+                            riskSheet.Cells[1, 4].Value = "Количество долгов";
+
+                            for (int col = 1; col <= 4; col++)
+                            {
+                                var cell = riskSheet.Cells[1, col];
+                                cell.Style.Font.Bold = true;
+                                cell.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                            }
+
+                            int r = 2;
+                            foreach (var item in riskList)
+                            {
+                                riskSheet.Cells[r, 1].Value = item.GroupName;
+                                riskSheet.Cells[r, 2].Value = item.StudentName;
+                                riskSheet.Cells[r, 3].Value = item.StudentCardNumber;
+                                riskSheet.Cells[r, 4].Value = item.DebtCount;
+                                r++;
+                            }
+
+                            if (riskSheet.Dimension != null)
+                                riskSheet.Cells[riskSheet.Dimension.Address].AutoFitColumns();
+                        }
+                    }
+                    catch { }
+
                     // Сохраняем в файл
                     var fi = new FileInfo(filePath);
                     package.SaveAs(fi);

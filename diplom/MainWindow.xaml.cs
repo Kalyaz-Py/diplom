@@ -1,4 +1,5 @@
 ﻿using diplom.Views;
+using diplom.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,23 +51,71 @@ namespace diplom
                 return;
             }
 
-            // Проверка учетных данных (демо-режим авторизации)
-            if (login == "admin" && password == "admin")
+            try
             {
-                // Если данные верны, открываем панель администратора
-                AdminWindow adminWindow = new AdminWindow();
-                adminWindow.Show();
+                // Ищем пользователя в таблице Users по логину и паролю
+                var user = OpenContext.db.Users.FirstOrDefault(u => u.UserLogin == login && u.UserPassword == password);
 
-                // Закрываем окно входа
-                this.Close();
+                if (user != null)
+                {
+                    // Формируем приветственное сообщение в зависимости от роли
+                    string greeting;
+
+                    switch (user.RoleID)
+                    {
+                        case 3: // преподаватель
+                            // Пытаемся найти связанную запись преподавателя
+                            var teacher = OpenContext.db.Teachers.FirstOrDefault(t => t.UserID == user.UserID);
+                            if (teacher != null)
+                            {
+                                string middle = string.IsNullOrWhiteSpace(teacher.MiddleName) ? "" : " " + teacher.MiddleName;
+                                string fio = $"{teacher.LastName} {teacher.FirstName}{middle}".Trim();
+                                greeting = $"Добро пожаловать, {fio}";
+                            }
+                            else
+                            {
+                                greeting = "Добро пожаловать, преподаватель";
+                            }
+                            break;
+                        case 2: // заведующий отделением
+                            greeting = "Добро пожаловать, заведующий отделением";
+                            break;
+                        case 1: // администратор
+                        default:
+                            greeting = "Добро пожаловать, администратор";
+                            break;
+                    }
+
+                    MessageBox.Show(greeting, "Авторизация", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Открываем соответствующее окно в зависимости от роли
+                    if (user.RoleID == 3)
+                    {
+                        var teacher = OpenContext.db.Teachers.FirstOrDefault(t => t.UserID == user.UserID);
+                        int teacherId = teacher != null ? teacher.TeacherID : 0;
+                        TeacherWindow tw = new TeacherWindow(teacherId, greeting);
+                        tw.Show();
+                    }
+                    else
+                    {
+                        AdminWindow adminWindow = new AdminWindow();
+                        adminWindow.Show();
+                    }
+
+                    // Закрываем окно входа
+                    this.Close();
+                }
+                else
+                {
+                    // Если учетные данные неверны — выводим предупреждение и очищаем пароль
+                    MessageBox.Show("Неверный логин или пароль! Доступ заблокирован.", "Ошибка авторизации", MessageBoxButton.OK, MessageBoxImage.Error);
+                    TxtPassword.Clear();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Если пароль не подошел — выводим предупреждение
-                MessageBox.Show("Неверный логин или пароль! Доступ заблокирован.", "Ошибка авторизации", MessageBoxButton.OK, MessageBoxImage.Error);
-
-                // Очищаем поле пароля для повторного ввода
-                TxtPassword.Clear();
+                // На случай ошибок подключения/запроса к БД показываем сообщение
+                MessageBox.Show($"Ошибка при обращении к базе данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

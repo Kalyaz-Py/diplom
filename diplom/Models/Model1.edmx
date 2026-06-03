@@ -58,6 +58,13 @@
           <Property Name="Status" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="CreatedAt" Type="datetime" Nullable="false" />
         </EntityType>
+        <EntityType Name="Roles">
+          <Key>
+            <PropertyRef Name="RoleID" />
+          </Key>
+          <Property Name="RoleID" Type="int" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="50" Nullable="false" />
+        </EntityType>
         <EntityType Name="Schedules">
           <Key>
             <PropertyRef Name="ScheduleID" />
@@ -96,6 +103,7 @@
           <Property Name="LastName" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="FirstName" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="MiddleName" Type="nvarchar" MaxLength="50" />
+          <Property Name="UserID" Type="int" />
         </EntityType>
         <EntityType Name="TimeSlots">
           <Key>
@@ -106,6 +114,15 @@
           <Property Name="StartTime" Type="time" Precision="7" Nullable="false" />
           <Property Name="EndTime" Type="time" Precision="7" Nullable="false" />
           <Property Name="Description" Type="nvarchar" MaxLength="200" />
+        </EntityType>
+        <EntityType Name="Users">
+          <Key>
+            <PropertyRef Name="UserID" />
+          </Key>
+          <Property Name="UserID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="UserLogin" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="UserPassword" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="RoleID" Type="int" Nullable="false" />
         </EntityType>
         <Association Name="FK_Debts_Disciplines">
           <End Role="Disciplines" Type="Self.Disciplines" Multiplicity="1">
@@ -251,17 +268,43 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Teachers_Users">
+          <End Role="Users" Type="Self.Users" Multiplicity="0..1" />
+          <End Role="Teachers" Type="Self.Teachers" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Users">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="Teachers">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Users_Roles">
+          <End Role="Roles" Type="Self.Roles" Multiplicity="1" />
+          <End Role="Users" Type="Self.Users" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Roles">
+              <PropertyRef Name="RoleID" />
+            </Principal>
+            <Dependent Role="Users">
+              <PropertyRef Name="RoleID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="Хранилище CollegeAttestationDBModelContainer">
           <EntitySet Name="Classrooms" EntityType="Self.Classrooms" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Debts" EntityType="Self.Debts" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Disciplines" EntityType="Self.Disciplines" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Groups" EntityType="Self.Groups" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ResitSchedules" EntityType="Self.ResitSchedules" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Roles" EntityType="Self.Roles" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Schedules" EntityType="Self.Schedules" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Students" EntityType="Self.Students" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="TeacherDisciplines" EntityType="Self.TeacherDisciplines" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Teachers" EntityType="Self.Teachers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="TimeSlots" EntityType="Self.TimeSlots" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Users" EntityType="Self.Users" Schema="dbo" store:Type="Tables" />
           <AssociationSet Name="FK_Debts_Disciplines" Association="Self.FK_Debts_Disciplines">
             <End Role="Disciplines" EntitySet="Disciplines" />
             <End Role="Debts" EntitySet="Debts" />
@@ -305,6 +348,14 @@
           <AssociationSet Name="FK_TD_Teacher" Association="Self.FK_TD_Teacher">
             <End Role="Teachers" EntitySet="Teachers" />
             <End Role="TeacherDisciplines" EntitySet="TeacherDisciplines" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Teachers_Users" Association="Self.FK_Teachers_Users">
+            <End Role="Users" EntitySet="Users" />
+            <End Role="Teachers" EntitySet="Teachers" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Users_Roles" Association="Self.FK_Users_Roles">
+            <End Role="Roles" EntitySet="Roles" />
+            <End Role="Users" EntitySet="Users" />
           </AssociationSet>
         </EntityContainer>
       </Schema>
@@ -377,6 +428,14 @@
           <NavigationProperty Name="Classroom" Relationship="Self.FK_ResitSchedules_Classrooms" FromRole="ResitSchedules" ToRole="Classrooms" />
           <NavigationProperty Name="Debt" Relationship="Self.FK_ResitSchedules_Debts" FromRole="ResitSchedules" ToRole="Debts" />
         </EntityType>
+        <EntityType Name="Role">
+          <Key>
+            <PropertyRef Name="RoleID" />
+          </Key>
+          <Property Name="RoleID" Type="Int32" Nullable="false" />
+          <Property Name="Name" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="Users" Relationship="Self.FK_Users_Roles" FromRole="Roles" ToRole="Users" />
+        </EntityType>
         <EntityType Name="Schedule">
           <Key>
             <PropertyRef Name="ScheduleID" />
@@ -412,7 +471,9 @@
           <Property Name="LastName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="FirstName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="MiddleName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="UserID" Type="Int32" />
           <NavigationProperty Name="Debts" Relationship="Self.FK_Debts_Teachers" FromRole="Teachers" ToRole="Debts" />
+          <NavigationProperty Name="User" Relationship="Self.FK_Teachers_Users" FromRole="Teachers" ToRole="Users" />
           <NavigationProperty Name="Disciplines" Relationship="Self.TeacherDisciplines" FromRole="Teachers" ToRole="Disciplines" />
         </EntityType>
         <EntityType Name="TimeSlot">
@@ -425,6 +486,17 @@
           <Property Name="EndTime" Type="Time" Nullable="false" Precision="7" />
           <Property Name="Description" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="Schedules" Relationship="Self.FK_Schedules_TimeSlots" FromRole="TimeSlots" ToRole="Schedules" />
+        </EntityType>
+        <EntityType Name="User">
+          <Key>
+            <PropertyRef Name="UserID" />
+          </Key>
+          <Property Name="UserID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="UserLogin" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="UserPassword" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="RoleID" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Role" Relationship="Self.FK_Users_Roles" FromRole="Users" ToRole="Roles" />
+          <NavigationProperty Name="Teachers" Relationship="Self.FK_Teachers_Users" FromRole="Users" ToRole="Teachers" />
         </EntityType>
         <Association Name="FK_ResitSchedules_Classrooms">
           <End Role="Classrooms" Type="Self.Classroom" Multiplicity="0..1" />
@@ -534,6 +606,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Users_Roles">
+          <End Role="Roles" Type="Self.Role" Multiplicity="1" />
+          <End Role="Users" Type="Self.User" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Roles">
+              <PropertyRef Name="RoleID" />
+            </Principal>
+            <Dependent Role="Users">
+              <PropertyRef Name="RoleID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Schedules_TimeSlots">
           <End Role="TimeSlots" Type="Self.TimeSlot" Multiplicity="1" />
           <End Role="Schedules" Type="Self.Schedule" Multiplicity="*" />
@@ -543,6 +627,18 @@
             </Principal>
             <Dependent Role="Schedules">
               <PropertyRef Name="TimeSlotID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Teachers_Users">
+          <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+          <End Role="Teachers" Type="Self.Teacher" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Users">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="Teachers">
+              <PropertyRef Name="UserID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -556,10 +652,12 @@
           <EntitySet Name="Disciplines" EntityType="Self.Discipline" />
           <EntitySet Name="Groups" EntityType="Self.Group" />
           <EntitySet Name="ResitSchedules" EntityType="Self.ResitSchedule" />
+          <EntitySet Name="Roles" EntityType="Self.Role" />
           <EntitySet Name="Schedules" EntityType="Self.Schedule" />
           <EntitySet Name="Students" EntityType="Self.Student" />
           <EntitySet Name="Teachers" EntityType="Self.Teacher" />
           <EntitySet Name="TimeSlots" EntityType="Self.TimeSlot" />
+          <EntitySet Name="Users" EntityType="Self.User" />
           <AssociationSet Name="FK_ResitSchedules_Classrooms" Association="Self.FK_ResitSchedules_Classrooms">
             <End Role="Classrooms" EntitySet="Classrooms" />
             <End Role="ResitSchedules" EntitySet="ResitSchedules" />
@@ -592,9 +690,17 @@
             <End Role="Groups" EntitySet="Groups" />
             <End Role="Students" EntitySet="Students" />
           </AssociationSet>
+          <AssociationSet Name="FK_Users_Roles" Association="Self.FK_Users_Roles">
+            <End Role="Roles" EntitySet="Roles" />
+            <End Role="Users" EntitySet="Users" />
+          </AssociationSet>
           <AssociationSet Name="FK_Schedules_TimeSlots" Association="Self.FK_Schedules_TimeSlots">
             <End Role="TimeSlots" EntitySet="TimeSlots" />
             <End Role="Schedules" EntitySet="Schedules" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Teachers_Users" Association="Self.FK_Teachers_Users">
+            <End Role="Users" EntitySet="Users" />
+            <End Role="Teachers" EntitySet="Teachers" />
           </AssociationSet>
           <AssociationSet Name="TeacherDisciplines" Association="Self.TeacherDisciplines">
             <End Role="Disciplines" EntitySet="Disciplines" />
@@ -665,6 +771,14 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="Roles">
+            <EntityTypeMapping TypeName="CollegeAttestationDBModel.Role">
+              <MappingFragment StoreEntitySet="Roles">
+                <ScalarProperty Name="RoleID" ColumnName="RoleID" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Schedules">
             <EntityTypeMapping TypeName="CollegeAttestationDBModel.Schedule">
               <MappingFragment StoreEntitySet="Schedules">
@@ -696,6 +810,7 @@
                 <ScalarProperty Name="LastName" ColumnName="LastName" />
                 <ScalarProperty Name="FirstName" ColumnName="FirstName" />
                 <ScalarProperty Name="MiddleName" ColumnName="MiddleName" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -707,6 +822,16 @@
                 <ScalarProperty Name="StartTime" ColumnName="StartTime" />
                 <ScalarProperty Name="EndTime" ColumnName="EndTime" />
                 <ScalarProperty Name="Description" ColumnName="Description" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Users">
+            <EntityTypeMapping TypeName="CollegeAttestationDBModel.User">
+              <MappingFragment StoreEntitySet="Users">
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="UserLogin" ColumnName="UserLogin" />
+                <ScalarProperty Name="UserPassword" ColumnName="UserPassword" />
+                <ScalarProperty Name="RoleID" ColumnName="RoleID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

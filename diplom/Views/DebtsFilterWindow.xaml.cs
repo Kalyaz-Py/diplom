@@ -137,15 +137,14 @@ namespace diplom.Views
                     return;
                 }
 
-                // Помечаем как сдан
+                // Помечаем как сдан и сохраняем время сдачи
                 debt.DebtStatus = "Сдан";
-                // Устанавливаем флаг очищено/сдано
-                // (если в модели присутствует поле IsCleared)
                 try
                 {
                     debt.IsCleared = true;
+                    debt.DateCleared = DateTime.Now;
                 }
-                catch { }
+                catch { /* ignore */ }
 
                 // Удаляем связанные расписания для этого долга (если есть)
                 var schedules = OpenContext.db.Schedules.Where(s => s.DebtID == debt.DebtID).ToList();
@@ -153,6 +152,14 @@ namespace diplom.Views
                 {
                     OpenContext.db.Schedules.Remove(s);
                 }
+
+                // Явно помечаем сущность как изменённую и сохраняем
+                try
+                {
+                    var entry = OpenContext.db.Entry(debt);
+                    entry.State = System.Data.Entity.EntityState.Modified;
+                }
+                catch { /* ignore */ }
 
                 OpenContext.db.SaveChanges();
 
